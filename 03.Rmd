@@ -1,0 +1,96 @@
+---
+title: "Day Four"
+author: "Kelly Bodwin"
+date: "12/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(here)
+library(janitor)
+```
+
+## Part One
+
+```{r}
+dat <- read_csv(here("03-data"),
+                   col_names = FALSE)
+
+dat <- dat %>%
+  separate(X1, sep = "", into = paste0("X", 0:12)) %>%
+  select(-X0) %>%
+  mutate_all(parse_number)
+
+means <- dat %>%
+  summarize_all(mean)
+
+
+library(asbio)
+
+gamma <- means %>%
+  mutate_all(~as.character((. > 0.5)*1)) %>%
+  unite("gam", X1:X12, sep = "") %>%
+  pull(gam) %>%
+  bin2dec()
+  
+
+eps <- means %>%
+  mutate_all(~as.character((. < 0.5)*1)) %>%
+  unite("eps", X1:X12, sep = "") %>%
+  pull(eps) %>%
+  bin2dec()
+
+gamma*eps
+```
+
+## Part Two
+
+```{r}
+dat_tmp <- dat
+i = 1
+while(nrow(dat_tmp) > 1) {
+  
+  bit <- (mean(dat_tmp[[i]]) >= 0.5)*1
+  which_rows <- dat_tmp[[i]] == bit
+  dat_tmp <- dat_tmp[which_rows,]
+  
+  i = i + 1
+  
+}
+
+oxy <- dat_tmp %>%
+  mutate_all(as.character) %>%
+  unite("eps", X1:X12, sep = "") %>%
+  pull(eps) %>%
+  bin2dec()
+```
+
+```{r}
+dat_tmp <- dat
+i = 1
+while(nrow(dat_tmp) > 1) {
+  
+  bit <- (mean(dat_tmp[[i]]) < 0.5)*1
+  which_rows <- dat_tmp[[i]] == bit
+  dat_tmp <- dat_tmp[which_rows,]
+  
+  i = i + 1
+  
+}
+
+carb <- dat_tmp %>%
+  mutate_all(as.character) %>%
+  unite("eps", X1:X12, sep = "") %>%
+  pull(eps) %>%
+  bin2dec()
+
+oxy*carb
+```
+
+

@@ -1,0 +1,234 @@
+---
+title: "Day Four"
+author: "Kelly Bodwin"
+date: "12/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(here)
+library(janitor)
+```
+
+## Part One
+
+```{r}
+boards <- read_csv(here("04-boards"),
+                   col_names = FALSE)
+
+boards <- boards %>%
+  separate(X1, into = c("A", "B", "C", "D", "E"), convert = TRUE) %>%
+  mutate(
+    Player = rep(paste0("Player", 1:100), each = 5),
+    row = rep(1:5, 100)
+  )
+```
+
+```{r}
+check_for_bingo_rows <- function(boards) {
+  
+  num_called <- boards %>%
+    select(A:E) %>%
+    pmap(~sum(.x == -1))
+  
+  if (any(num_called == 5)) {
+    print(boards$Player[which(num_called == 5)])
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+  
+}
+
+check_for_bingo_cols <- function(boards) {
+  
+  res <- boards %>%
+    group_by(Player) %>%
+    summarize_at(vars(A:E),
+                 funs(sum(. == -1))) %>%
+    mutate(
+      max_called = pmap(list(A, B, C, D, E), max)
+    ) %>% 
+    filter(
+      max_called == 5
+    )
+  
+  if (nrow(res) > 0){
+    print(res$Player)
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+  
+}
+```
+
+
+```{r}
+calls <- readLines("04-calls") %>% str_split(",") %>% unlist()
+
+i = 1
+bingo = FALSE
+
+boards_orig <- boards
+
+while(!bingo){
+  
+  call <- calls[i]
+  
+  boards <- boards %>% 
+    mutate(
+      A = ifelse(A == call, -1, A),
+      B = ifelse(B == call, -1, B),
+      C = ifelse(C == call, -1, C),
+      D = ifelse(D == call, -1, D),
+      E = ifelse(E == call, -1, E)
+    )
+  
+  bingo <- check_for_bingo_cols(boards) | check_for_bingo_rows(boards)
+  
+  print(bingo)
+  
+  i <- i+1
+}
+call
+```
+
+Player 30 wins! On Call 68
+
+```{r}
+boards_orig %>%
+  filter(Player == "Player30") %>%
+  select(A, B, C, D, E)
+
+boards %>%
+  filter(Player == "Player30") %>%
+  select(A, B, C, D, E) %>%
+  mutate_all(
+    ~replace(., . == -1, 0)
+  ) %>%
+  sum()
+
+859*68
+```
+
+## Part Two
+
+```{r}
+check_for_bingo_rows <- function(boards) {
+  
+  num_called <- boards %>%
+    rowwise() %>%
+    summarize(across(A:E, ~sum(.x == -1))) %>%
+    mutate(
+      tot_called = A + B + C + D + E
+    ) %>%
+    pull(tot_called)
+  
+  if (any(num_called == 5)) {
+    return(boards$Player[which(num_called == 5)])
+  } else {
+    return(FALSE)
+  }
+  
+}
+
+check_for_bingo_cols <- function(boards) {
+  
+  res <- boards %>%
+    group_by(Player) %>%
+    summarize_at(vars(A:E),
+                 funs(sum(. == -1))) %>%
+    mutate(
+      max_called = pmap(list(A, B, C, D, E), max)
+    ) %>% 
+    filter(
+      max_called == 5
+    )
+  
+  if (nrow(res) > 0){
+    return(res$Player)
+  } else {
+    return(FALSE)
+  }
+  
+}
+```
+
+
+```{r}
+
+i = 1
+bingo = FALSE
+
+boards <- boards_orig
+bingo_winners <- list()
+
+for(i in 1:length(calls)){
+  
+  call <- calls[i]
+  
+  boards <- boards %>% 
+    mutate(
+      A = ifelse(A == call, -1, A),
+      B = ifelse(B == call, -1, B),
+      C = ifelse(C == call, -1, C),
+      D = ifelse(D == call, -1, D),
+      E = ifelse(E == call, -1, E)
+    )
+  
+  bingo_winners[[i]] <- unique(c(check_for_bingo_cols(boards), check_for_bingo_rows(boards)))
+
+}
+
+how_many <- bingo_winners %>% map_int(length)
+which(how_many == 100)
+
+setdiff(bingo_winners[[88]], bingo_winners[[87]])
+```
+
+Player 42 is the loser.  It wins on the 88th call.
+
+```{r}
+
+i = 1
+bingo = FALSE
+
+boards <- boards_orig
+bingo_winners <- list()
+
+for(i in 1:88){
+  
+  call <- calls[i]
+  
+  boards <- boards %>% 
+    mutate(
+      A = ifelse(A == call, -1, A),
+      B = ifelse(B == call, -1, B),
+      C = ifelse(C == call, -1, C),
+      D = ifelse(D == call, -1, D),
+      E = ifelse(E == call, -1, E)
+    )
+  
+  bingo_winners[[i]] <- unique(c(check_for_bingo_cols(boards), check_for_bingo_rows(boards)))
+}
+
+calls[88]
+
+boards %>%
+  filter(Player == "Player42") %>%
+  select(A, B, C, D, E) %>%
+  mutate_all(
+    ~replace(., . == -1, 0)
+  ) %>%
+  sum()
+
+170*59
+```
+

@@ -1,0 +1,64 @@
+---
+title: "Day Two"
+author: "Kelly Bodwin"
+date: "12/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(here)
+library(janitor)
+```
+
+## Part One
+
+```{r}
+dat <- read_csv(here("02-data"),
+                col_names = FALSE)
+```
+```{r}
+dat <- dat %>%
+  separate(X1, into = c("direction", "amount")) %>%
+  mutate(
+    amount = parse_number(amount),
+    amount = case_when(
+      direction == "up" ~ -1*amount,
+      TRUE ~ amount
+    )
+  )
+
+dat %>%
+  group_by(direction == "forward") %>%
+  summarize(sum(amount))
+
+
+```
+
+## Part Two
+
+```{r}
+dat <- dat %>%
+  mutate(
+    adj_aim = ifelse(direction == "forward",
+                     0, amount),
+    aim = cumsum(adj_aim),
+    move_depth = case_when(
+      direction == "forward" ~ aim*amount,
+      TRUE ~ 0
+    )
+  )
+
+sum(dat$move_depth)*2003
+
+## sanity check
+dat %>%
+  filter(direction == "forward") %>%
+  summarize(sum(amount))
+```
+

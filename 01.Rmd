@@ -1,0 +1,55 @@
+---
+title: "Day One"
+author: "Kelly Bodwin"
+date: "12/3/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(here)
+library(janitor)
+```
+
+## Part One
+
+```{r}
+dat <- read_csv(here("Day_One-Depth_Sweep"), col_names = FALSE)
+```
+```{r}
+dat <- dat %>%
+  mutate(
+    prev = slide_dbl(X1,
+                 ~.x,
+                 .before = 1L,
+                 .after = -1L,
+                 .complete = TRUE),
+    is_bigger = X1 > prev
+  )
+  
+sum(dat$is_bigger, na.rm = TRUE)
+```
+
+## Part Two
+
+If A > B, that's only because the entry at position 1 is bigger than the entry at position 4.
+
+```{r}
+dat <- dat %>%
+  mutate(
+    prev = slide_dbl(X1,
+                 ~.x,
+                 .before = 3L,
+                 .after = -3L,
+                 .complete = TRUE),
+    is_bigger = X1 > prev
+  )
+  
+sum(dat$is_bigger, na.rm = TRUE)
+```
+

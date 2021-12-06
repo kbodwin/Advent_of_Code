@@ -1,0 +1,90 @@
+---
+title: "Day Five"
+author: "Kelly Bodwin"
+date: "12/5/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(here)
+library(janitor)
+```
+
+## Part One
+
+```{r}
+dat <- read_csv(here("05-data"),
+                   col_names = FALSE)
+
+dat <- dat %>%
+  separate(X2, sep = " -> ",
+           into = c("start_y", "end_x"),
+           convert = TRUE) %>%
+  rename(
+    start_x = X1,
+    end_y = X3
+  )
+
+dat_2 <- dat %>%
+  filter(
+    (start_y == end_y) | (start_x == end_x)
+  )
+```
+
+```{r}
+mat <- matrix(0,
+              nrow = max(dat$start_y, dat$end_y),
+              ncol = max(dat$start_x, dat$end_x))
+
+
+
+for (i in 1:nrow(dat_2)) {
+  
+  xrange <- dat_2$start_x[i]:dat_2$end_x[i]
+  yrange <- dat_2$start_y[i]:dat_2$end_y[i]
+  
+  mat[yrange, xrange] <- mat[yrange, xrange] + 1
+}
+
+sum(mat > 1)
+```
+
+
+## Part Two
+
+
+```{r}
+mat <- matrix(0,
+              nrow = max(dat$start_y, dat$end_y),
+              ncol = max(dat$start_x, dat$end_x))
+
+
+for (i in 1:nrow(dat)) {
+  
+  xrange <- dat$start_x[i]:dat$end_x[i]
+  yrange <- dat$start_y[i]:dat$end_y[i]
+  
+  if (length(xrange) == 1 | length(yrange) == 1) {
+    
+    mat[yrange, xrange] <- mat[yrange, xrange] + 1
+    
+  } else {
+    
+    for (j in 1:length(xrange)) {
+      x <- xrange[j]
+      y <- yrange[j]
+      mat[y, x] <- mat[y, x] + 1
+    }
+    
+  }
+
+}
+
+sum(mat > 1)
+```
