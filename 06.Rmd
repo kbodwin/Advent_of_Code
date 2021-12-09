@@ -1,0 +1,191 @@
+---
+title: "Day six"
+author: "Kelly Bodwin"
+date: "12/5/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(here)
+library(janitor)
+```
+
+## Part One
+
+```{r}
+start_fish <- c(1,3,3,4,5,1,1,1,1,1,1,2,1,4,1,1,1,5,2,2,4,3,1,1,2,5,4,2,2,3,1,2,3,2,1,1,4,4,2,4,4,1,2,4,3,3,3,1,1,3,4,5,2,5,1,2,5,1,1,1,3,2,3,3,1,4,1,1,4,1,4,1,1,1,1,5,4,2,1,2,2,5,5,1,1,1,1,2,1,1,1,1,3,2,3,1,4,3,1,1,3,1,1,1,1,3,3,4,5,1,1,5,4,4,4,4,2,5,1,1,2,5,1,3,4,4,1,4,1,5,5,2,4,5,1,1,3,1,3,1,4,1,3,1,2,2,1,5,1,5,1,3,1,3,1,4,1,4,5,1,4,5,1,1,5,2,2,4,5,1,3,2,4,2,1,1,1,2,1,2,1,3,4,4,2,2,4,2,1,4,1,3,1,3,5,3,1,1,2,2,1,5,2,1,1,1,1,1,5,4,3,5,3,3,1,5,5,4,4,2,1,1,1,2,5,3,3,2,1,1,1,5,5,3,1,4,4,2,4,2,1,1,1,5,1,2,4,1,3,4,4,2,1,4,2,1,3,4,3,3,2,3,1,5,3,1,1,5,1,2,2,4,4,1,2,3,1,2,1,1,2,1,1,1,2,3,5,5,1,2,3,1,3,5,4,2,1,3,3,4)
+
+```
+
+```{r}
+vec <- start_fish
+#vec <- c(3,4,3,1,2)
+
+generate_fish <- function(vec) {
+  
+  new <- rep(8, sum(vec == 0))
+  vec <- vec - 1
+  vec[vec == -1] <- 6
+  vec <- c(vec, new)
+  
+  return(vec)
+}
+
+for(i in 1:80) {
+  
+  vec <- generate_fish(vec)
+  
+  
+}
+
+length(vec)
+```
+## Part Two
+
+```{r}
+counts_orig <- tibble(
+  fish_clock = start_fish
+) %>%
+  mutate(
+    fish_clock = factor(fish_clock,
+                        levels = as.character(0:8))
+  ) %>%
+  count(fish_clock, .drop = FALSE)
+
+
+counts <- counts %>%
+  mutate(
+    n = log(n)
+  )
+
+
+generate_fish <- function(counts) {
+  
+  num_new <- counts %>%
+    filter(fish_clock == 0) %>%
+    pull(n)
+  
+  counts <- counts %>%
+    mutate(
+      n = c(n[-1], num_new),
+      n = ifelse(fish_clock == 6, n + num_new, n)
+    )
+  
+  return(counts)
+}
+
+for(i in 1:256) {
+  
+  counts <- generate_fish(counts)
+  
+}
+
+counts
+
+sum(counts$n)
+```
+
+
+Better idea: 
+how many result from one of each
+try example first
+
+```{r}
+counts_orig <- tibble(
+  fish_clock = c(3,4,3,1,2)
+) %>%
+  mutate(
+    fish_clock = factor(fish_clock,
+                        levels = as.character(0:8))
+  ) %>%
+  count(fish_clock, .drop = FALSE)
+
+
+
+num_babies <- counts_orig %>%
+  mutate(
+    num_bab = 0
+  )
+
+counts <- counts_orig
+
+
+for (i in 1:6){
+  
+  counts$n <- 0
+  counts[counts$fish_clock == i, "n"] <- 1
+
+  for(j in 1:257) {
+    
+    counts <- generate_fish(counts)
+    
+  }
+  
+  num_babies$num_bab[i] <- sum(counts$n)
+  
+}
+
+num_babies <- num_babies %>%
+  mutate(
+    tot_bab = n*num_bab
+  )
+
+total <- sum(num_babies$tot_bab)
+
+total
+```
+
+
+```{r}
+counts_orig <- tibble(
+  fish_clock = start_fish
+) %>%
+  mutate(
+    fish_clock = factor(fish_clock,
+                        levels = as.character(0:8))
+  ) %>%
+  count(fish_clock, .drop = FALSE)
+
+
+
+
+
+num_babies <- counts_orig %>%
+  mutate(
+    num_bab = 0
+  )
+
+counts <- counts_orig
+
+
+for (i in 1:6){
+  
+  counts$n <- 0
+  counts[counts$fish_clock == i, "n"] <- 1
+
+  for(j in 1:257) {
+    
+    counts <- generate_fish(counts)
+    
+  }
+  
+  num_babies$num_bab[i] <- sum(counts$n)
+  
+}
+
+num_babies <- num_babies %>%
+  mutate(
+    tot_bab = n*num_bab
+  )
+
+total <- sum(num_babies$tot_bab)
+
+total
+```
+(rather than figure out scipen options I just typed the answer out from the environment, oh well)
