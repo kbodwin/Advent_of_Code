@@ -1,7 +1,7 @@
 ---
-title: "Day six"
+title: "Day Eight"
 author: "Kelly Bodwin"
-date: "12/5/2021"
+date: "12/8/2021"
 output: html_document
 ---
 
@@ -18,174 +18,185 @@ library(janitor)
 
 ## Part One
 
-```{r}
-start_fish <- c(1,3,3,4,5,1,1,1,1,1,1,2,1,4,1,1,1,5,2,2,4,3,1,1,2,5,4,2,2,3,1,2,3,2,1,1,4,4,2,4,4,1,2,4,3,3,3,1,1,3,4,5,2,5,1,2,5,1,1,1,3,2,3,3,1,4,1,1,4,1,4,1,1,1,1,5,4,2,1,2,2,5,5,1,1,1,1,2,1,1,1,1,3,2,3,1,4,3,1,1,3,1,1,1,1,3,3,4,5,1,1,5,4,4,4,4,2,5,1,1,2,5,1,3,4,4,1,4,1,5,5,2,4,5,1,1,3,1,3,1,4,1,3,1,2,2,1,5,1,5,1,3,1,3,1,4,1,4,5,1,4,5,1,1,5,2,2,4,5,1,3,2,4,2,1,1,1,2,1,2,1,3,4,4,2,2,4,2,1,4,1,3,1,3,5,3,1,1,2,2,1,5,2,1,1,1,1,1,5,4,3,5,3,3,1,5,5,4,4,2,1,1,1,2,5,3,3,2,1,1,1,5,5,3,1,4,4,2,4,2,1,1,1,5,1,2,4,1,3,4,4,2,1,4,2,1,3,4,3,3,2,3,1,5,3,1,1,5,1,2,2,4,4,1,2,3,1,2,1,1,2,1,1,1,2,3,5,5,1,2,3,1,3,5,4,2,1,3,3,4)
+Ugh okay so the first 10 sets of letters are the 10 digits, in some order.  We use these to decode the next 4 sets of letters.
 
+```{r}
+dat <- readLines(here("08-data"))
+
+dat_signals <- dat %>% str_remove("\\|.*")
+dat_codes <- dat %>% str_remove(".*\\|")
 ```
 
 ```{r}
-vec <- start_fish
-#vec <- c(3,4,3,1,2)
+lengths_sigs <- dat_signals %>%
+  str_split(" ") %>%
+  map(~str_length(.x))
 
-generate_fish <- function(vec) {
-  
-  new <- rep(8, sum(vec == 0))
-  vec <- vec - 1
-  vec[vec == -1] <- 6
-  vec <- c(vec, new)
-  
-  return(vec)
-}
+lengths_codes <- dat_codes %>%
+  str_split(" ") %>%
+  map(~str_length(.x))
 
-for(i in 1:80) {
-  
-  vec <- generate_fish(vec)
-  
-  
-}
+## ones use two segments
+## twos use 5 segs
+## threes use 5 segs
+## fours use four segments
+## fives use 5 segs
+## sizes use 6 segs
+## sevens use three segments
+## eights use seven segments
+## nines use 6 segs
 
-length(vec)
+lengths_codes %>%
+  map(~ sum(.x %in% c(2, 3, 4, 7))) %>%
+  unlist() %>%
+  sum()
 ```
+
 ## Part Two
 
-```{r}
-counts_orig <- tibble(
-  fish_clock = start_fish
-) %>%
-  mutate(
-    fish_clock = factor(fish_clock,
-                        levels = as.character(0:8))
-  ) %>%
-  count(fish_clock, .drop = FALSE)
+Okay so which digits share segments.
 
-
-counts <- counts %>%
-  mutate(
-    n = log(n)
-  )
-
-
-generate_fish <- function(counts) {
-  
-  num_new <- counts %>%
-    filter(fish_clock == 0) %>%
-    pull(n)
-  
-  counts <- counts %>%
-    mutate(
-      n = c(n[-1], num_new),
-      n = ifelse(fish_clock == 6, n + num_new, n)
-    )
-  
-  return(counts)
-}
-
-for(i in 1:256) {
-  
-  counts <- generate_fish(counts)
-  
-}
-
-counts
-
-sum(counts$n)
-```
-
-
-Better idea: 
-how many result from one of each
-try example first
-
-```{r}
-counts_orig <- tibble(
-  fish_clock = c(3,4,3,1,2)
-) %>%
-  mutate(
-    fish_clock = factor(fish_clock,
-                        levels = as.character(0:8))
-  ) %>%
-  count(fish_clock, .drop = FALSE)
-
-
-
-num_babies <- counts_orig %>%
-  mutate(
-    num_bab = 0
-  )
-
-counts <- counts_orig
-
-
-for (i in 1:6){
-  
-  counts$n <- 0
-  counts[counts$fish_clock == i, "n"] <- 1
-
-  for(j in 1:257) {
-    
-    counts <- generate_fish(counts)
-    
-  }
-  
-  num_babies$num_bab[i] <- sum(counts$n)
-  
-}
-
-num_babies <- num_babies %>%
-  mutate(
-    tot_bab = n*num_bab
-  )
-
-total <- sum(num_babies$tot_bab)
-
-total
-```
 
 
 ```{r}
-counts_orig <- tibble(
-  fish_clock = start_fish
-) %>%
-  mutate(
-    fish_clock = factor(fish_clock,
-                        levels = as.character(0:8))
-  ) %>%
-  count(fish_clock, .drop = FALSE)
+shares_segs <- tibble(
+  a = c(T, F, T, T, F, T, T, T, T, T),
+  b = c(T, F, F, F, T, T, T, F, T, T),
+  c = c(T, T, T, T, T, F, F, T, T, T),
+  d = c(F, F, T, T, T, T, T, F, T, T),
+  e = c(T, F, T, F, F, F, T, F, T, F),
+  f = c(T, T, F, T, T, T, T, T, T, T),
+  g = c(T, F, T, T, F, T, T, F, T, T)
+)
 
+shares_segs %>%
+  summarize_all(sum)
+```
 
+appears 4 times: e
+appears 6 times: b
+appears 9 times: f
+appears 8 times: a and c.  Only c is in 1.
+appears 7 times: d and g.  Only d is in 4.
 
-
-
-num_babies <- counts_orig %>%
-  mutate(
-    num_bab = 0
+```{r}
+decode_line <- function(vec) {
+  
+  letter_tabs <- vec %>% 
+    str_remove_all("[^a-g]") %>%
+    str_split(pattern = "") %>%
+    unlist() %>%
+    table()
+  
+  which_is_one <- vec %>%
+    str_split(pattern = " ") %>%
+    unlist() 
+  
+  could_be_c <- which_is_one[str_length(which_is_one) == 2] %>%
+    str_split("") %>%
+    unlist()
+  
+  could_be_d <- which_is_one[str_length(which_is_one) == 4] %>%
+    str_split("") %>%
+    unlist()
+  
+  translate <- tibble(
+    a = setdiff(which(letter_tabs == 8) %>% names(), could_be_c),
+    b = which(letter_tabs == 6) %>% names(),
+    c = intersect(which(letter_tabs == 8) %>% names(), could_be_c),
+    d = intersect(which(letter_tabs == 7) %>% names(), could_be_d),
+    e = which(letter_tabs == 4) %>% names(),
+    f = which(letter_tabs == 9) %>% names(),
+    g = setdiff(which(letter_tabs == 7) %>% names(), could_be_d),
   )
-
-counts <- counts_orig
-
-
-for (i in 1:6){
   
-  counts$n <- 0
-  counts[counts$fish_clock == i, "n"] <- 1
-
-  for(j in 1:257) {
-    
-    counts <- generate_fish(counts)
-    
-  }
+  ## Switch so col names are old letters and values are new
   
-  num_babies$num_bab[i] <- sum(counts$n)
+  vals <- translate[1,]
+  translate <- c("a", "b", "c", "d", "e", "f", "g")
+  names(translate) <- vals
+  
+  return(translate)
   
 }
 
-num_babies <- num_babies %>%
-  mutate(
-    tot_bab = n*num_bab
-  )
+decode_line(dat_signals[1])
 
-total <- sum(num_babies$tot_bab)
-
-total
 ```
-(rather than figure out scipen options I just typed the answer out from the environment, oh well)
+
+```{r}
+code_to_real_code <- function(code, translation) {
+  
+  translation$` ` = " "
+  
+  thing <- code %>%
+    str_split("") %>%
+    unlist()
+  
+  translation[thing] %>%
+    str_c(collapse = "")
+  
+}
+
+code_to_real_code(dat_codes[1], decode_line(dat_signals[1]))
+
+```
+
+```{r}
+code_to_num <- function(translated_code) {
+  
+  tc <- translated_code %>%
+    str_split("") %>%
+    unlist() %>%
+    sort()
+  
+  match <- shares_segs %>%
+    select(all_of(tc)) %>%
+    rowSums()
+  
+  unmatch <- shares_segs %>%
+    select(-all_of(tc)) %>%
+    rowSums()
+  
+  which(match == length(tc) &
+        unmatch == 0) -1
+  
+}
+
+code_to_num("fbcd")
+
+```
+OK let's do this:
+
+```{r}
+trans <- map(dat_signals, decode_line)
+
+new_codes <- map2(dat_codes, trans,
+                  ~ code_to_real_code(.x, .y))
+
+new_codes <- map(new_codes, 
+                 ~ .x %>% 
+                   str_trim() %>% 
+                   str_split( pattern = " ") %>% 
+                   unlist())
+
+nums <- new_codes %>%
+  map(~map_dbl(.x, code_to_num))
+```
+
+OKAY PLEASE BE RIGHT JFC
+
+```{r}
+sum(unlist(nums))
+```
+
+oh wait they aren't digits ok
+
+```{r}
+nums %>%
+  map_dbl(~str_c(.x, collapse = "") %>% parse_number()) %>%
+  sum()
+```
+
+
+
