@@ -1,0 +1,64 @@
+---
+title: "Day Ten"
+author: "Kelly Bodwin"
+date: "12/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(here)
+library(janitor)
+```
+
+## Part One
+
+```{r}
+#dat <- readLines(here("09-example"))
+dat <- readLines(here("10-dat"))
+
+
+starter <- tibble(
+  symbol = c("()", "[]", "<>", "{}"),
+  status = rep("closed", 4),
+  scores = c(3, 57, 25137, 1197)
+)
+
+scan_line <- function(line) {
+  
+  line <- line %>% str_split("") %>% unlist()
+  
+  first_illegal <- c()
+  
+  for (sym in line) {
+    
+    idx <- which(str_detect(starter$symbol, sym))
+    these_syms <- starter$symbol[idx] %>% str_split("") %>% unlist()
+    oc <- which(str_detect(these_syms, sym))
+    status <- starter$status[idx]
+    recent_open <- c("eof")
+    
+    if (status == "closed" & oc == 1) {
+      starter$status[idx] = "open"
+      recent_open <- c(these_syms[2], recent_open)
+    } else if (status == "open" & oc == 2 & sym == recent_open[1]) {
+      starter$status[idx] = "closed"
+      recent_open <- recent_open[-1]
+    } else {
+      return(sym)
+    }
+    
+  }
+  
+}
+
+
+line <- dat[1]
+debugonce(scan_line)
+scan_line(line)
+```
