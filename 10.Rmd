@@ -19,46 +19,146 @@ library(janitor)
 ## Part One
 
 ```{r}
-#dat <- readLines(here("09-example"))
+#dat <- readLines(here("10-example"))
 dat <- readLines(here("10-dat"))
 
 
 starter <- tibble(
-  symbol = c("()", "[]", "<>", "{}"),
+  symbol = c("()", "[]", "{}", "<>"),
   status = rep("closed", 4),
-  scores = c(3, 57, 25137, 1197)
+  scores = c(3, 57, 1197, 25137)
 )
+
+```
+
+```{r}
 
 scan_line <- function(line) {
   
   line <- line %>% str_split("") %>% unlist()
   
-  first_illegal <- c()
+      recent_open <- c("eof")
   
   for (sym in line) {
     
-    idx <- which(str_detect(starter$symbol, sym))
-    these_syms <- starter$symbol[idx] %>% str_split("") %>% unlist()
-    oc <- which(str_detect(these_syms, sym))
-    status <- starter$status[idx]
-    recent_open <- c("eof")
+    idx <- which(str_detect(starter$symbol,
+                            stringr::fixed(sym)))
     
-    if (status == "closed" & oc == 1) {
-      starter$status[idx] = "open"
+    these_syms <- starter$symbol[idx] %>% 
+      str_split("") %>% 
+      unlist()
+    
+    oc <- which(str_detect(these_syms, 
+                           stringr::fixed(sym)))
+    
+    if (oc == 1) {
       recent_open <- c(these_syms[2], recent_open)
-    } else if (status == "open" & oc == 2 & sym == recent_open[1]) {
-      starter$status[idx] = "closed"
+    } else if (oc == 2 & sym == recent_open[1]) {
       recent_open <- recent_open[-1]
     } else {
+        #browser()
       return(sym)
     }
     
   }
   
+  return(NA)
 }
 
 
-line <- dat[1]
-debugonce(scan_line)
+line <- "[(()[<>])]({[<{<<[]>>("
+#debugonce(scan_line)
 scan_line(line)
 ```
+
+```{r}
+bads <- dat %>%
+  map_chr(scan_line) %>%
+  table()
+
+sum(bads*starter$scores)
+```
+
+## Part Two
+
+drop corrupted
+
+```{r}
+bads <- dat %>%
+  map_chr(scan_line)
+
+dat <- dat[is.na(bads)]
+
+
+```
+
+new function
+
+```{r}
+
+scan_line <- function(line) {
+  
+  line <- line %>% str_split("") %>% unlist()
+  
+      recent_open <- c("eof")
+  
+  for (sym in line) {
+    
+    idx <- which(str_detect(starter$symbol,
+                            stringr::fixed(sym)))
+    
+    these_syms <- starter$symbol[idx] %>% 
+      str_split("") %>% 
+      unlist()
+    
+    oc <- which(str_detect(these_syms, 
+                           stringr::fixed(sym)))
+    
+    if (oc == 1) {
+      recent_open <- c(these_syms[2], recent_open)
+    } else if (oc == 2 & sym == recent_open[1]) {
+      recent_open <- recent_open[-1]
+    } else {
+        #browser()
+      stop("You didn't drop all bads!")
+    }
+    
+  }
+  
+  return(recent_open)
+}
+```
+
+```{r}
+#dat <- readLines(here("10-example"))
+#dat <- readLines(here("10-dat"))
+
+ends <- dat %>%
+  map(scan_line)
+```
+
+```{r}
+scores <- c(")" = 1, "]" = 2, "}" = 3, ">" = 4, "eof" = 0)
+
+make_points <- function(end_syms) {
+  
+  tot <- 0
+  
+  for (sym in end_syms[-length(end_syms)]){
+    
+    tot <- tot*5
+    tot <- tot + scores[sym]
+    
+  }
+  
+  return(tot)
+  
+}
+
+make_points("}}]])})]" %>% str_split("") %>% unlist())
+```
+
+```{r}
+ends %>% map_dbl(make_points) %>% median()
+```
+
