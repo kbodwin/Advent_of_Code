@@ -4,7 +4,7 @@
 library(stringr)
 library(purrr)
 
-dat <- readLines("day3_dat1.txt")
+dat <- readLines(here::here("2024", "day3_dat1.txt"))
 
 mul <- `*`
 
